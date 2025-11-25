@@ -532,13 +532,8 @@ function updateWaterDisplay() {
 
 // Save water intake to history
 function saveWaterIntake() {
-    const now = new Date();
-    const today = now.toISOString().split('T')[0]; // YYYY-MM-DD format
-    const hour = now.getHours();
-    const minute = now.getMinutes();
-    const timeString = `${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`;
-    
-    // Save to water history
+    const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+
     if (!waterHistory[today]) {
         waterHistory[today] = {
             total: 0,
@@ -546,68 +541,32 @@ function saveWaterIntake() {
         };
     }
 
-    // Get the current total before adding new entry
-    const previousTotal = waterHistory[today].total;
-    const newTotal = previousTotal + waterAmount;
-
     // Add entry with timestamp
     const entry = {
         amount: waterAmount,
-        time: timeString,
-        timestamp: now.toISOString()
+        time: new Date().toLocaleTimeString(),
+        timestamp: new Date().toISOString()
     };
 
     // Add to today's entries
     waterHistory[today].entries.push(entry);
-    waterHistory[today].total = newTotal; // Update the total
+
+    // Update today's total
+    waterHistory[today].total = waterHistory[today].entries.reduce((sum, entry) => sum + entry.amount, 0);
 
     // Save to localStorage
     localStorage.setItem('waterHistory', JSON.stringify(waterHistory));
 
-    // Also save to calendar format
-    const calendarKey = getDateKey(now.getFullYear(), now.getMonth() + 1, now.getDate());
-    const hourKey = `${String(hour).padStart(2, '0')}:00`;
-    const calendarEntry = {
-        type: 'water',
-        amount: waterAmount,
-        total: newTotal,
-        timestamp: now.toISOString(),
-        displayText: `💧 Wypito ${waterAmount}ml wody (łącznie: ${newTotal}ml)`
-    };
-    
-    // Get existing entries for this hour or create new array
-    const hourKeyFull = `${calendarKey}-${hourKey}`;
-    let hourEntries = [];
-    try {
-        const saved = localStorage.getItem(hourKeyFull);
-        if (saved) {
-            hourEntries = JSON.parse(saved);
-            if (!Array.isArray(hourEntries)) {
-                hourEntries = [hourEntries];
-            }
-        }
-    } catch (e) {
-        console.error('Error parsing calendar entries:', e);
-    }
-    
-    // Add new water entry
-    hourEntries.push(calendarEntry);
-    localStorage.setItem(hourKeyFull, JSON.stringify(hourEntries));
+    // Show success message with the amount that was saved
+    const savedAmount = waterAmount;
 
-    // Show success message with the amount that was saved and new total
-    const totalCups = Math.round(newTotal / 250); // Assuming 250ml per cup
-    const successMessage = `✅ Zapisano ${waterAmount}ml wody!\n\n` +
-                         `📊 Aktualne podsumowanie dnia:\n` +
-                         `• Wypito łącznie: ${newTotal}ml (${totalCups} szklanek)\n` +
-                         `• Ostatni wpis: ${timeString}`;
-    
     // Reset the counter after saving
     waterAmount = 0;
     localStorage.setItem('waterAmount', waterAmount);
     updateWaterDisplay();
 
     // Show success message with the correct amount
-    alert(successMessage);
+    alert(`Zapisano ${savedAmount}ml wody do dzisiejszego bilansu!`);
 }
 
 // Display water history for a specific date
@@ -652,11 +611,7 @@ waterBtns.forEach(btn => {
 // Save water button click handler
 saveWaterBtn?.addEventListener('click', () => {
     if (waterAmount > 0) {
-        // Show confirmation dialog with water amount
-        const confirmSave = confirm(`Czy na pewno chcesz zapisać ${waterAmount}ml wody?`);
-        if (confirmSave) {
-            saveWaterIntake();
-        }
+        saveWaterIntake();
     } else {
         alert('Dodaj wodę przed zapisaniem!');
     }
@@ -865,223 +820,223 @@ window.addEventListener('beforeunload', () => {
 /* ==================== PRZEPISY (6 propozycji: 2 śniadania, 2 obiady, 2 kolacje) ==================== */
 /* ==================== PRZEPISY (6 propozycji: 2 śniadania, 2 obiady, 2 kolacje) ==================== */
 const recipes = [
-  {
-    id: 'b1',
-    title: "Owsianka proteinowa z orzechami i jabłkiem",
-    type: "breakfast",
-    category: "highProtein",  // ⭐ wysoka zawartość białka dla osób z niedowagą / wysoką aktywnością
-    desc: "Syte śniadanie z dużą ilością białka i błonnika.",
-    kcal: "380 kcal",
-    time: "10 minut",
-    ingredients: [
-      "60 g płatków owsianych",
-      "200 ml mleka (lub napój roślinny)",
-      "1 miarka białka serwatkowego lub roślinnego (~25 g białka)",
-      "1 małe jabłko – pokrojone",
-      "15 g orzechów włoskich (źródło tłuszczu)",
-      "cynamon do smaku"
-    ],
-    steps: "Gotuj płatki na mleku przez ~5 min, dodaj białko po zdjęciu z ognia, wymieszaj z jabłkiem i orzechami. Posyp cynamonem.",
-    plateRule: "Połowa porcji: dodatkowe białko (białko w proszku + mleko), 1/4 węglowodany: płatki i jabłko, 1/4 tłuszcze: orzechy.",
-    note: "Dobre na dłuższe uczucie sytości."
-  },
-  {
-    id: 'b2',
-    title: "Jajecznica z awokado i pomidorem",
-    type: "breakfast",
-    category: "highProtein", // ⭐ również wysoka zawartość białka
-    desc: "Szybkie śniadanie o wysokiej zawartości białka i zdrowych tłuszczów.",
-    kcal: "420 kcal",
-    time: "8 minut",
-    ingredients: [
-      "3 jajka (lub 2 całe + 1 białko)",
-      "1/2 awokado (źródło tłuszczu)",
-      "1 pomidor",
-      "1 kromka pełnoziarnistego chleba",
-      "Sól, pieprz, zioła"
-    ],
-    steps: "Usmaż jajecznicę, pokrój awokado i pomidora, podaj z kromką chleba. Awokado dostarcza zdrowych tłuszczów; chleb – węglowodany.",
-    plateRule: "Połowa: jajka (białko), 1/4: kromka pełnoziarnista (węglowodany), 1/4: awokado (tłuszcze).",
-    note: "Idealne dla osób, które potrzebują szybkiego, sycącego śniadania."
-  },
-  {
-    id: 'l1',
-    title: "Kurczak pieczony z komosą i warzywami",
-    type: "lunch",
-    category: "balanced", // ⚖️ dla osób ze zdrową wagą
-    desc: "Zbilansowany obiad z chudym białkiem i złożonymi węglowodanami.",
-    kcal: "560 kcal",
-    time: "35 minut",
-    ingredients: [
-      "150 g piersi z kurczaka",
-      "60 g suchej komosy ryżowej (quinoa)",
-      "mix warzyw (brokuł, marchew, papryka) ~200 g",
-      "1 łyżka oliwy z oliwek (do warzyw)",
-      "Przyprawy: sól, pieprz, papryka"
-    ],
-    steps: "Piecz kurczaka 20–25 min w 180°C (przyprawiony). Ugotuj komosę zgodnie z opakowaniem. Podsmaż lub blanszuj warzywa, dodaj oliwę i przyprawy. Podawaj wszystko razem.",
-    plateRule: "Połowa talerza: warzywa (dużo objętości), połowa białko: kurczak, 1/4 węglowodany: komosa, 1/4 tłuszcze: łyżka oliwy/oliwki.",
-    note: "Świetne dla regeneracji po treningu."
-  },
-  {
-    id: 'l2',
-    title: "Łosoś z puree z batatów i sałatką",
-    type: "lunch",
-    category: "highProtein", // ⭐ wysokokaloryczne dla osób o dużej aktywności
-    desc: "Tłuste ryby (omega-3) + złożone węglowodany.",
-    kcal: "600 kcal",
-    time: "30 minut",
-    ingredients: [
-      "150 g filetu z łososia",
-      "200 g batatów",
-      "Garść rukoli i liści sałaty",
-      "1 łyżka oliwy/masła klarowanego",
-      "Cytryna, sól, pieprz"
-    ],
-    steps: "Ugotuj bataty i zrób puree z odrobiną oliwy. Usmaż łososia krótko na patelni (skórą do dołu). Podaj z sałatką z rukoli skropioną cytryną.",
-    plateRule: "Połowa: łosoś (białko + część tłuszczu), 1/4: bataty (węglowodany), 1/4: oliwa i tłuszcz z ryby (tłuszcze).",
-    note: "Bardzo dobre źródło kwasów omega-3."
-  },
-  {
-    id: 'd1',
-    title: "Sałatka z tuńczykiem i jajkiem",
-    type: "dinner",
-    category: "light", // 🌿 lekka kolacja dla osób z nadwagą i niską aktywnością
-    desc: "Lekka kolacja bogata w białko, niska w węglowodany.",
-    kcal: "360 kcal",
-    time: "12 minut",
-    ingredients: [
-      "1 puszka tuńczyka w wodzie (~120 g odsączony)",
-      "2 jajka ugotowane na twardo",
-      "Mix sałat, ogórek, pomidorki",
-      "1 łyżka oliwy z oliwek",
-      "Sól, pieprz, sok z cytryny"
-    ],
-    steps: "Połącz sałaty i warzywa, dodaj rozdrobnionego tuńczyka i pokrojone jajka. Skrop oliwą i sokiem z cytryny.",
-    plateRule: "Połowa talerza: sałatka & warzywa (objętość), połowa białko: tuńczyk + jajka, 1/4 tłuszcze: oliwa, 1/4 węglowodany: niewielka porcja (opcjonalnie kromka chleba).",
-    note: "Lekka kolacja sprzyjająca trawieniu przed snem."
-  },
-  {
-    id: 'd2',
-    title: "Pełnoziarnista tortilla z indykiem i guacamole",
-    type: "dinner",
-    category: "balanced", // ⚖️ posiłek uniwersalny
-    desc: "Kolacja zbalansowana: chude białko + zdrowe tłuszcze.",
-    kcal: "450 kcal",
-    time: "15 minut",
-    ingredients: [
-      "1 pełnoziarnista tortilla",
-      "100 g pieczonego indyka lub cienko krojonej piersi z kurczaka",
-      "1/2 awokado (guacamole)",
-      "Sałata, ogórek, papryka",
-      "Sos jogurtowy (opcjonalnie)"
-    ],
-    steps: "Rozgrzej tortillę, ułóż indyka, warzywa i guacamole. Zwiń i podawaj. Guacamole to źródło zdrowych tłuszczów.",
-    plateRule: "Połowa białko: indyk, 1/4 węglowodany: tortilla pełnoziarnista, 1/4 tłuszcze: awokado/guacamole.",
-    note: "Dobre rozwiązanie do zabrania na wynos."
-  },   {
-    id: 'l3',
-    title: "Krem z brokuła z pestkami dyni",
-    type: "lunch",
-    category: "light",
-    desc: "Lekki krem z brokuła z dodatkiem zdrowych tłuszczów.",
-    kcal: "210 kcal",
-    time: "15 minut",
-    ingredients: [
-      "250 g brokuła",
-      "1 szklanka bulionu warzywnego",
-      "1 łyżka pestek dyni",
-      "1 łyżka jogurtu naturalnego",
-      "Sól, pieprz, czosnek"
-    ],
-    steps: "Ugotuj brokuła w bulionie, zmiksuj na gładki krem. Dodaj jogurt, przyprawy oraz uprażone pestki dyni.",
-    plateRule: "Warzywa to większość talerza, jogurt to białko, pestki dyni to zdrowe tłuszcze.",
-    note: "Idealne na redukcję."
-  },
-  {
-    id: 'l4',
-    title: "Zupa pomidorowa fit z ryżem brązowym",
-    type: "lunch",
-    category: "light",
-    desc: "Lekkostrawna pomidorowa z niewielką porcją ryżu.",
-    kcal: "280 kcal",
-    time: "25 minut",
-    ingredients: [
-      "1 szklanka przecieru pomidorowego",
-      "300 ml bulionu warzywnego",
-      "30 g ryżu brązowego",
-      "Bazylia, oregano, sól",
-      "Łyżeczka oliwy"
-    ],
-    steps: "Ugotuj ryż, dodaj do zupy na koniec wraz z przyprawami, skrop oliwą.",
-    plateRule: "Warzywa dominują, ryż to węglowodany, oliwa to tłuszcz.",
-    note: "Dobra na kolację i obiad."
-  },
-  {
-    id: 'd3',
-    title: "Chłodnik ogórkowy z jajkiem",
-    type: "dinner",
-    category: "light",
-    desc: "Orzeźwiający, niskokaloryczny posiłek kolacyjny.",
-    kcal: "190 kcal",
-    time: "10 minut",
-    ingredients: [
-      "1 ogórek",
-      "200 g kefiru lub maślanki",
-      "1 jajko ugotowane na twardo",
-      "Koperek, sól, pieprz",
-      "Łyżeczka soku z cytryny"
-    ],
-    steps: "Zetrzyj ogórka, wymieszaj z kefirem i przyprawami. Podaj z jajkiem.",
-    plateRule: "Warzywa dominujące, kefir + jajko dostarcza białka.",
-    note: "Bardzo lekkostrawne na noc."
-  },
-  {
-    id: 'd4',
-    title: "Sałatka z tofu i mango",
-    type: "dinner",
-    category: "light",
-    desc: "Kolacja roślinna z przewagą warzyw i lekkim dressingiem.",
-    kcal: "250 kcal",
-    time: "12 minut",
-    ingredients: [
-      "80 g tofu",
-      "1/2 mango",
-      "Mix sałat",
-      "1 łyżeczka sezamu",
-      "Sól, cytryna, pieprz"
-    ],
-    steps: "Pokrój tofu i mango, wymieszaj z sałatą. Posyp sezamem i dopraw cytryną.",
-    plateRule: "Warzywa + lekkie białko + minimalny tłuszcz.",
-    note: "Roślinne i lekkostrawne."
-  },
-  {
-    id: 'b3',
-    title: "Jogurt naturalny z owocami i miodem",
-    type: "breakfast",
-    category: "light",
-    desc: "Proste śniadanie redukcyjne.",
-    kcal: "240 kcal",
-    time: "4 minuty",
-    ingredients: [
-      "150 g jogurtu naturalnego",
-      "Garść borówek lub jabłko",
-      "Łyżeczka miodu",
-      "Łyżka płatków migdałowych"
-    ],
-    steps: "Wymieszaj składniki, posyp migdałami.",
-    plateRule: "Jogurt to białko, owoce to węglowodany, migdały dodają tłuszczu.",
-    note: "Dobre na słodkie zachcianki."
-  }
+    {
+        id: 'b1',
+        title: "Owsianka proteinowa z orzechami i jabłkiem",
+        type: "breakfast",
+        category: "highProtein",  // ⭐ wysoka zawartość białka dla osób z niedowagą / wysoką aktywnością
+        desc: "Syte śniadanie z dużą ilością białka i błonnika.",
+        kcal: "380 kcal",
+        time: "10 minut",
+        ingredients: [
+            "60 g płatków owsianych",
+            "200 ml mleka (lub napój roślinny)",
+            "1 miarka białka serwatkowego lub roślinnego (~25 g białka)",
+            "1 małe jabłko – pokrojone",
+            "15 g orzechów włoskich (źródło tłuszczu)",
+            "cynamon do smaku"
+        ],
+        steps: "Gotuj płatki na mleku przez ~5 min, dodaj białko po zdjęciu z ognia, wymieszaj z jabłkiem i orzechami. Posyp cynamonem.",
+        plateRule: "Połowa porcji: dodatkowe białko (białko w proszku + mleko), 1/4 węglowodany: płatki i jabłko, 1/4 tłuszcze: orzechy.",
+        note: "Dobre na dłuższe uczucie sytości."
+    },
+    {
+        id: 'b2',
+        title: "Jajecznica z awokado i pomidorem",
+        type: "breakfast",
+        category: "highProtein", // ⭐ również wysoka zawartość białka
+        desc: "Szybkie śniadanie o wysokiej zawartości białka i zdrowych tłuszczów.",
+        kcal: "420 kcal",
+        time: "8 minut",
+        ingredients: [
+            "3 jajka (lub 2 całe + 1 białko)",
+            "1/2 awokado (źródło tłuszczu)",
+            "1 pomidor",
+            "1 kromka pełnoziarnistego chleba",
+            "Sól, pieprz, zioła"
+        ],
+        steps: "Usmaż jajecznicę, pokrój awokado i pomidora, podaj z kromką chleba. Awokado dostarcza zdrowych tłuszczów; chleb – węglowodany.",
+        plateRule: "Połowa: jajka (białko), 1/4: kromka pełnoziarnista (węglowodany), 1/4: awokado (tłuszcze).",
+        note: "Idealne dla osób, które potrzebują szybkiego, sycącego śniadania."
+    },
+    {
+        id: 'l1',
+        title: "Kurczak pieczony z komosą i warzywami",
+        type: "lunch",
+        category: "balanced", // ⚖️ dla osób ze zdrową wagą
+        desc: "Zbilansowany obiad z chudym białkiem i złożonymi węglowodanami.",
+        kcal: "560 kcal",
+        time: "35 minut",
+        ingredients: [
+            "150 g piersi z kurczaka",
+            "60 g suchej komosy ryżowej (quinoa)",
+            "mix warzyw (brokuł, marchew, papryka) ~200 g",
+            "1 łyżka oliwy z oliwek (do warzyw)",
+            "Przyprawy: sól, pieprz, papryka"
+        ],
+        steps: "Piecz kurczaka 20–25 min w 180°C (przyprawiony). Ugotuj komosę zgodnie z opakowaniem. Podsmaż lub blanszuj warzywa, dodaj oliwę i przyprawy. Podawaj wszystko razem.",
+        plateRule: "Połowa talerza: warzywa (dużo objętości), połowa białko: kurczak, 1/4 węglowodany: komosa, 1/4 tłuszcze: łyżka oliwy/oliwki.",
+        note: "Świetne dla regeneracji po treningu."
+    },
+    {
+        id: 'l2',
+        title: "Łosoś z puree z batatów i sałatką",
+        type: "lunch",
+        category: "highProtein", // ⭐ wysokokaloryczne dla osób o dużej aktywności
+        desc: "Tłuste ryby (omega-3) + złożone węglowodany.",
+        kcal: "600 kcal",
+        time: "30 minut",
+        ingredients: [
+            "150 g filetu z łososia",
+            "200 g batatów",
+            "Garść rukoli i liści sałaty",
+            "1 łyżka oliwy/masła klarowanego",
+            "Cytryna, sól, pieprz"
+        ],
+        steps: "Ugotuj bataty i zrób puree z odrobiną oliwy. Usmaż łososia krótko na patelni (skórą do dołu). Podaj z sałatką z rukoli skropioną cytryną.",
+        plateRule: "Połowa: łosoś (białko + część tłuszczu), 1/4: bataty (węglowodany), 1/4: oliwa i tłuszcz z ryby (tłuszcze).",
+        note: "Bardzo dobre źródło kwasów omega-3."
+    },
+    {
+        id: 'd1',
+        title: "Sałatka z tuńczykiem i jajkiem",
+        type: "dinner",
+        category: "light", // 🌿 lekka kolacja dla osób z nadwagą i niską aktywnością
+        desc: "Lekka kolacja bogata w białko, niska w węglowodany.",
+        kcal: "360 kcal",
+        time: "12 minut",
+        ingredients: [
+            "1 puszka tuńczyka w wodzie (~120 g odsączony)",
+            "2 jajka ugotowane na twardo",
+            "Mix sałat, ogórek, pomidorki",
+            "1 łyżka oliwy z oliwek",
+            "Sól, pieprz, sok z cytryny"
+        ],
+        steps: "Połącz sałaty i warzywa, dodaj rozdrobnionego tuńczyka i pokrojone jajka. Skrop oliwą i sokiem z cytryny.",
+        plateRule: "Połowa talerza: sałatka & warzywa (objętość), połowa białko: tuńczyk + jajka, 1/4 tłuszcze: oliwa, 1/4 węglowodany: niewielka porcja (opcjonalnie kromka chleba).",
+        note: "Lekka kolacja sprzyjająca trawieniu przed snem."
+    },
+    {
+        id: 'd2',
+        title: "Pełnoziarnista tortilla z indykiem i guacamole",
+        type: "dinner",
+        category: "balanced", // ⚖️ posiłek uniwersalny
+        desc: "Kolacja zbalansowana: chude białko + zdrowe tłuszcze.",
+        kcal: "450 kcal",
+        time: "15 minut",
+        ingredients: [
+            "1 pełnoziarnista tortilla",
+            "100 g pieczonego indyka lub cienko krojonej piersi z kurczaka",
+            "1/2 awokado (guacamole)",
+            "Sałata, ogórek, papryka",
+            "Sos jogurtowy (opcjonalnie)"
+        ],
+        steps: "Rozgrzej tortillę, ułóż indyka, warzywa i guacamole. Zwiń i podawaj. Guacamole to źródło zdrowych tłuszczów.",
+        plateRule: "Połowa białko: indyk, 1/4 węglowodany: tortilla pełnoziarnista, 1/4 tłuszcze: awokado/guacamole.",
+        note: "Dobre rozwiązanie do zabrania na wynos."
+    }, {
+        id: 'l3',
+        title: "Krem z brokuła z pestkami dyni",
+        type: "lunch",
+        category: "light",
+        desc: "Lekki krem z brokuła z dodatkiem zdrowych tłuszczów.",
+        kcal: "210 kcal",
+        time: "15 minut",
+        ingredients: [
+            "250 g brokuła",
+            "1 szklanka bulionu warzywnego",
+            "1 łyżka pestek dyni",
+            "1 łyżka jogurtu naturalnego",
+            "Sól, pieprz, czosnek"
+        ],
+        steps: "Ugotuj brokuła w bulionie, zmiksuj na gładki krem. Dodaj jogurt, przyprawy oraz uprażone pestki dyni.",
+        plateRule: "Warzywa to większość talerza, jogurt to białko, pestki dyni to zdrowe tłuszcze.",
+        note: "Idealne na redukcję."
+    },
+    {
+        id: 'l4',
+        title: "Zupa pomidorowa fit z ryżem brązowym",
+        type: "lunch",
+        category: "light",
+        desc: "Lekkostrawna pomidorowa z niewielką porcją ryżu.",
+        kcal: "280 kcal",
+        time: "25 minut",
+        ingredients: [
+            "1 szklanka przecieru pomidorowego",
+            "300 ml bulionu warzywnego",
+            "30 g ryżu brązowego",
+            "Bazylia, oregano, sól",
+            "Łyżeczka oliwy"
+        ],
+        steps: "Ugotuj ryż, dodaj do zupy na koniec wraz z przyprawami, skrop oliwą.",
+        plateRule: "Warzywa dominują, ryż to węglowodany, oliwa to tłuszcz.",
+        note: "Dobra na kolację i obiad."
+    },
+    {
+        id: 'd3',
+        title: "Chłodnik ogórkowy z jajkiem",
+        type: "dinner",
+        category: "light",
+        desc: "Orzeźwiający, niskokaloryczny posiłek kolacyjny.",
+        kcal: "190 kcal",
+        time: "10 minut",
+        ingredients: [
+            "1 ogórek",
+            "200 g kefiru lub maślanki",
+            "1 jajko ugotowane na twardo",
+            "Koperek, sól, pieprz",
+            "Łyżeczka soku z cytryny"
+        ],
+        steps: "Zetrzyj ogórka, wymieszaj z kefirem i przyprawami. Podaj z jajkiem.",
+        plateRule: "Warzywa dominujące, kefir + jajko dostarcza białka.",
+        note: "Bardzo lekkostrawne na noc."
+    },
+    {
+        id: 'd4',
+        title: "Sałatka z tofu i mango",
+        type: "dinner",
+        category: "light",
+        desc: "Kolacja roślinna z przewagą warzyw i lekkim dressingiem.",
+        kcal: "250 kcal",
+        time: "12 minut",
+        ingredients: [
+            "80 g tofu",
+            "1/2 mango",
+            "Mix sałat",
+            "1 łyżeczka sezamu",
+            "Sól, cytryna, pieprz"
+        ],
+        steps: "Pokrój tofu i mango, wymieszaj z sałatą. Posyp sezamem i dopraw cytryną.",
+        plateRule: "Warzywa + lekkie białko + minimalny tłuszcz.",
+        note: "Roślinne i lekkostrawne."
+    },
+    {
+        id: 'b3',
+        title: "Jogurt naturalny z owocami i miodem",
+        type: "breakfast",
+        category: "light",
+        desc: "Proste śniadanie redukcyjne.",
+        kcal: "240 kcal",
+        time: "4 minuty",
+        ingredients: [
+            "150 g jogurtu naturalnego",
+            "Garść borówek lub jabłko",
+            "Łyżeczka miodu",
+            "Łyżka płatków migdałowych"
+        ],
+        steps: "Wymieszaj składniki, posyp migdałami.",
+        plateRule: "Jogurt to białko, owoce to węglowodany, migdały dodają tłuszczu.",
+        note: "Dobre na słodkie zachcianki."
+    }
 
 ];
 
 /* ==================== RENDEROWANIE I OBSŁUGA STRONY PRZEPISÓW ==================== */
 
 function createRecipeCard(recipe) {
-  const card = document.createElement('div');
-  card.className = 'recipe-card card';
-card.innerHTML = `
+    const card = document.createElement('div');
+    card.className = 'recipe-card card';
+    card.innerHTML = `
   <h3 style="margin-top:0">${recipe.title} ${getCategoryIcon(recipe.category)}</h3>
   <p class="muted">${recipe.desc}</p>
   <p><strong>Kalorie:</strong> ${recipe.kcal} • <strong>Czas:</strong> ${recipe.time}</p>
@@ -1089,170 +1044,107 @@ card.innerHTML = `
   <button class="primary open-recipe" data-id="${recipe.id}" style="margin-top:10px;">Zobacz przepis</button>
 `;
 
-  return card;
+    return card;
 }
 function getCategoryIcon(category) {
-  switch(category) {
-    case "light": return "🌿";
-    case "highProtein": return "🥩";
-    case "balanced": return "⚖️";
-    default: return "";
-  }
+    switch (category) {
+        case "light": return "🌿";
+        case "highProtein": return "🥩";
+        case "balanced": return "⚖️";
+        default: return "";
+    }
 }
 
 function renderRecipes(filterType = 'all') {
-  const container = document.getElementById('recipesContainer');
-  if (!container) return;
-  container.innerHTML = '';
-  const list = (filterType === 'all') ? recipes : recipes.filter(r => r.type === filterType);
-  list.forEach(r => container.appendChild(createRecipeCard(r)));
-  // podczep przyciski
-  container.querySelectorAll('.open-recipe').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const id = btn.dataset.id;
-      const recipe = recipes.find(x => x.id === id);
-      if (recipe) openRecipeModalDetailed(recipe);
+    const container = document.getElementById('recipesContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    const list = (filterType === 'all') ? recipes : recipes.filter(r => r.type === filterType);
+    list.forEach(r => container.appendChild(createRecipeCard(r)));
+    // podczep przyciski
+    container.querySelectorAll('.open-recipe').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const id = btn.dataset.id;
+            const recipe = recipes.find(x => x.id === id);
+            if (recipe) openRecipeModalDetailed(recipe);
+        });
     });
-  });
 }
 
 function openRecipeModalDetailed(recipe) {
-  // usuń ewentualne stare modal
-  const existing = document.querySelector('.recipe-detail-modal');
-  if (existing) existing.remove();
+    // usuń ewentualne stare modal
+    const existing = document.querySelector('.recipe-detail-modal');
+    if (existing) existing.remove();
 
-  const modal = document.createElement('div');
-  modal.className = 'modal recipe-detail-modal';
-  modal.style.display = 'flex';
+    const modal = document.createElement('div');
+    modal.className = 'modal recipe-detail-modal';
+    modal.style.display = 'flex';
 
-  // Pobierz aktualny motyw
-  const isDarkMode = document.body.classList.contains('dark-theme');
-  const bgColor = isDarkMode ? '#2d3748' : '#f0f0f0';
-  const hoverColor = isDarkMode ? '#4a5568' : '#e0e0e0';
-  const textColor = isDarkMode ? '#e2e8f0' : '#1a202c';
-  const borderColor = isDarkMode ? '#4a5568' : '#cbd5e0';
-  
-  modal.innerHTML = `
-    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-${recipe.id}" 
-         style="width: 90%; max-width: 700px; max-height: 90vh; overflow-y: auto; 
-                background: ${styles.cardBg}; border-radius: 12px; padding: 25px; 
-                border: 1px solid ${styles.cardBorder}; box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-                color: ${styles.textColor};">
-      
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px;">
-        <h2 id="modal-${recipe.id}" style="margin: 0; font-size: 24px; color: ${styles.textColor};">
-          ${recipe.title}
-        </h2>
-        <button class="close-btn" aria-label="Zamknij" 
-                style="background: ${styles.bgColor}; color: ${styles.textColor}; 
-                       border: 1px solid ${styles.borderColor}; padding: 6px 14px; 
-                       font-size: 14px; cursor: pointer; border-radius: 6px; 
-                       transition: all 0.2s;" 
-                onmouseover="this.style.background='${styles.hoverColor}'" 
-                onmouseout="this.style.background='${styles.bgColor}'">
-          Zamknij
-        </button>
+    // Pobierz aktualny motyw
+    const isDarkMode = document.body.classList.contains('dark-theme');
+    const bgColor = isDarkMode ? '#2d3748' : '#f0f0f0';
+    const hoverColor = isDarkMode ? '#4a5568' : '#e0e0e0';
+    const textColor = isDarkMode ? '#e2e8f0' : '#1a202c';
+    const borderColor = isDarkMode ? '#4a5568' : '#cbd5e0';
+
+    modal.innerHTML = `
+    <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-${recipe.id}" style="width: 90%; max-width: 800px; max-height: 90vh; overflow-y: auto; background: var(--card-bg); border-radius: 12px; padding: 20px; position: relative;">
+      <div style="display: flex; justify-content: flex-end; margin-bottom: 15px;">
+        <button class="close-btn" aria-label="Zamknij" style="background: ${bgColor}; color: ${textColor}; border: 1px solid ${borderColor}; padding: 5px 12px; font-size: 16px; cursor: pointer; transition: all 0.2s; border-radius: 4px;" onmouseover="this.style.background='${hoverColor}'" onmouseout="this.style.background='${bgColor}'">Zamknij</button>
       </div>
-      
-      <p style="color: ${styles.mutedColor}; margin: 0 0 20px 0; font-size: 15px; line-height: 1.5;">
-        ${recipe.desc}
-      </p>
-      
-      <div class="recipe-info" style="background: ${isDarkMode ? '#374151' : '#f1f3f5'}; 
-                                   padding: 12px 15px; border-radius: 8px; margin-bottom: 20px;">
-        <p style="margin: 5px 0;">
-          <strong style="color: ${styles.textColor};">🍲 Kalorie:</strong> 
-          <span style="color: ${styles.textColor};">${recipe.kcal}</span>
-        </p>
-        <p style="margin: 5px 0;">
-          <strong style="color: ${styles.textColor};">⏱️ Czas przygotowania:</strong> 
-          <span style="color: ${styles.textColor};">${recipe.time}</span>
-        </p>
+      <div style="padding: 0 10px;">
+        <h2 id="modal-${recipe.id}" style="margin-top: 0;">${recipe.title}</h2>
+      <p class="muted">${recipe.desc}</p>
+      <div class="recipe-info" style="margin:10px 0;">
+        <p><strong>Kalorie:</strong> ${recipe.kcal}</p>
+        <p><strong>Czas przygotowania:</strong> ${recipe.time}</p>
       </div>
-      
-      <div style="margin-bottom: 25px;">
-        <h3 style="margin: 0 0 15px 0; color: ${styles.textColor}; font-size: 18px; 
-                border-bottom: 2px solid ${styles.borderColor}; padding-bottom: 6px; display: inline-block;">
-          Składniki
-        </h3>
-        <ul style="margin: 0; padding-left: 20px; color: ${styles.textColor};">
-          ${recipe.ingredients.map(i => `<li style="margin-bottom: 8px; line-height: 1.5;">${i}</li>`).join('')}
-        </ul>
+      <h3>Składniki</h3>
+      <ul>
+        ${recipe.ingredients.map(i => `<li>${i}</li>`).join('')}
+      </ul>
+      <h3>Sposób przygotowania</h3>
+      <p style="white-space:pre-line;">${recipe.steps}</p>
+      <h4>Dlaczego to zgodne z prawem talerza?</h4>
+      <p class="muted" style="font-size:14px;">${recipe.plateRule}</p>
+      <div style="display:flex;gap:8px;margin-top:16px;">
+        ${recipe.youtube ? `<button class="primary" onclick="window.open('${recipe.youtube}', '_blank')">▶️ Film</button>` : ''}
       </div>
-      
-      <div style="margin-bottom: 25px;">
-        <h3 style="margin: 0 0 15px 0; color: ${styles.textColor}; font-size: 18px; 
-                border-bottom: 2px solid ${styles.borderColor}; padding-bottom: 6px; display: inline-block;">
-          Sposób przygotowania
-        </h3>
-        <div style="white-space: pre-line; color: ${styles.textColor}; line-height: 1.6;">
-          ${recipe.steps}
-        </div>
-      </div>
-      
-      ${recipe.plateRule ? `
-        <div style="background: ${isDarkMode ? '#374151' : '#f8f9fa'}; 
-                    border-left: 4px solid ${isDarkMode ? '#4f46e5' : '#3b82f6'}; 
-                    padding: 12px 15px; border-radius: 0 8px 8px 0; margin: 25px 0;">
-          <h4 style="margin: 0 0 8px 0; color: ${styles.textColor}; font-size: 16px; 
-                   display: flex; align-items: center; gap: 8px;">
-            <span style="color: ${isDarkMode ? '#818cf8' : '#3b82f6'};">ℹ️</span> 
-            Dlaczego to zgodne z prawem talerza?
-          </h4>
-          <p style="margin: 0; color: ${styles.mutedColor}; font-size: 14px; line-height: 1.5;">
-            ${recipe.plateRule}
-          </p>
-        </div>` : ''}
-      
-      ${recipe.youtube ? `
-        <div style="margin-top: 20px; text-align: center;">
-          <button onclick="window.open('${recipe.youtube}', '_blank')" 
-                  style="background: ${isDarkMode ? '#4f46e5' : '#3b82f6'}; 
-                         color: white; border: none; padding: 10px 20px; 
-                         border-radius: 6px; font-weight: 500; cursor: pointer; 
-                         transition: all 0.2s; display: inline-flex; 
-                         align-items: center; gap: 8px;"
-                  onmouseover="this.style.opacity='0.9'" 
-                  onmouseout="this.style.opacity='1'">
-            <span>Obejrzyj przepis wideo</span>
-            <span style="font-size: 16px;">▶️</span>
-          </button>
-        </div>` : ''}
     </div>
   `;
-  document.body.appendChild(modal);
+    document.body.appendChild(modal);
 
-  // Obsługa zamykania
-  const closeBtn = modal.querySelector('.close-btn');
-  closeBtn.onclick = () => modal.remove();
-  
-  // Zamykanie po kliknięciu poza zawartością
-  modal.addEventListener('click', (e) => { 
-    if (e.target === modal) modal.remove(); 
-  });
-  
-  // focus na przycisku zamknięcia dla dostępności
-  closeBtn.focus();
+    // Obsługa zamykania
+    const closeBtn = modal.querySelector('.close-btn');
+    closeBtn.onclick = () => modal.remove();
+
+    // Zamykanie po kliknięciu poza zawartością
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) modal.remove();
+    });
+
+    // focus na przycisku zamknięcia dla dostępności
+    closeBtn.focus();
 }
 
 function initRecipesPage() {
-  // filtry
-  document.getElementById('filterBreakfast')?.addEventListener('click', () => renderRecipes('breakfast'));
-  document.getElementById('filterLunch')?.addEventListener('click', () => renderRecipes('lunch'));
-  document.getElementById('filterDinner')?.addEventListener('click', () => renderRecipes('dinner'));
-  document.getElementById('filterAll')?.addEventListener('click', () => renderRecipes('all'));
+    // filtry
+    document.getElementById('filterBreakfast')?.addEventListener('click', () => renderRecipes('breakfast'));
+    document.getElementById('filterLunch')?.addEventListener('click', () => renderRecipes('lunch'));
+    document.getElementById('filterDinner')?.addEventListener('click', () => renderRecipes('dinner'));
+    document.getElementById('filterAll')?.addEventListener('click', () => renderRecipes('all'));
 
-  // render all by default
-  renderRecipes('all');
+    // render all by default
+    renderRecipes('all');
 }
 
 // ensure page shows recipes when menu clicked
 function showPage(id) {
-  for (let p of pages) p.classList.remove('active');
-  document.getElementById(id).classList.add('active');
-  sidebar.classList.remove('active'); overlay.classList.remove('show');
-  if (id === 'profile') loadProfile();
-  if (id === 'recipes') initRecipesPage(); // <-- now initujemy stronę przepisów
+    for (let p of pages) p.classList.remove('active');
+    document.getElementById(id).classList.add('active');
+    sidebar.classList.remove('active'); overlay.classList.remove('show');
+    if (id === 'profile') loadProfile();
+    if (id === 'recipes') initRecipesPage(); // <-- now initujemy stronę przepisów
 }
 
 /* ==================== PRZEPIS DNIA ==================== */
@@ -1378,10 +1270,10 @@ function loadRecipeOfTheDay() {
     const dayTitle = document.getElementById("dayRecipeTitle");
     const dayDesc = document.getElementById("dayRecipeDesc");
     const openBtn = document.getElementById("openDayRecipe");
-    
+
     if (dayTitle) dayTitle.textContent = recipe.title;
     if (dayDesc) dayDesc.textContent = recipe.desc;
-    
+
     // Obsługa kliknięcia przycisku
     if (openBtn) {
         openBtn.onclick = () => {
@@ -1402,11 +1294,10 @@ function loadRecipeOfTheDay() {
                 padding: 20px;
                 box-sizing: border-box;
             `;
-            
+
             const modalContent = document.createElement('div');
             modalContent.className = 'recipe-modal-content';
             modalContent.style.cssText = `
-                background: white;
                 padding: 20px;
                 border-radius: 10px;
                 max-width: 600px;
@@ -1420,7 +1311,7 @@ function loadRecipeOfTheDay() {
             titleEl.textContent = recipe.title;
             titleEl.style.margin = '0 0 20px 0';
             titleEl.style.paddingRight = '30px'; // Zostawiamy miejsce na przycisk zamknięcia
-            
+
             // Przycisk zamknięcia - większy i bardziej widoczny
             const closeBtn = document.createElement('button');
             closeBtn.textContent = '×';
@@ -1475,7 +1366,7 @@ function loadRecipeOfTheDay() {
             const ingredientsTitle = document.createElement('h3');
             ingredientsTitle.textContent = 'Składniki:';
             ingredientsTitle.style.marginBottom = '10px';
-            
+
             const ingredientsList = document.createElement('ul');
             ingredientsList.style.paddingLeft = '20px';
             recipe.ingredients.forEach(ingredient => {
@@ -1489,7 +1380,7 @@ function loadRecipeOfTheDay() {
             const stepsTitle = document.createElement('h3');
             stepsTitle.textContent = 'Sposób przygotowania:';
             stepsTitle.style.margin = '20px 0 10px 0';
-            
+
             const stepsEl = document.createElement('p');
             stepsEl.textContent = recipe.steps;
             stepsEl.style.whiteSpace = 'pre-line';
@@ -1504,7 +1395,7 @@ function loadRecipeOfTheDay() {
             modalContent.appendChild(ingredientsList);
             modalContent.appendChild(stepsTitle);
             modalContent.appendChild(stepsEl);
-            
+
             modal.appendChild(modalContent);
             document.body.appendChild(modal);
 
@@ -1842,19 +1733,6 @@ document.addEventListener("DOMContentLoaded", () => {
     /* === Wczytywanie zapisanych danych dnia === */
     function loadDayEntries(baseKey) {
         let all = [];
-        const waterEntries = [];
-        let totalWaterForDay = 0;
-        const dateParts = baseKey.replace('calendar-', '').split('-');
-        const dateKey = dateParts.join('-');
-        
-        // Check for water history for this day
-        const waterData = waterHistory[dateKey];
-        if (waterData && waterData.entries && waterData.entries.length > 0) {
-            totalWaterForDay = waterData.total;
-            waterData.entries.forEach(entry => {
-                waterEntries.push(`💧 ${entry.time} - ${entry.amount}ml`);
-            });
-        }
 
         for (let h = 0; h < 24; h++) {
             const hour = String(h).padStart(2, "0") + ":00";
@@ -1862,47 +1740,24 @@ document.addEventListener("DOMContentLoaded", () => {
             const saved = localStorage.getItem(fullKey);
             if (!saved) continue;
 
+            // Jeśli wcześniej zapisane jako JSON — sformatuj czytelnie.
+            let entryText = saved;
             try {
-                let entries = [];
-                let parsed;
-                
-                // Try to parse as JSON
-                try {
-                    parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed)) {
-                        entries = parsed;
-                    } else if (parsed) {
-                        entries = [parsed];
-                    }
-                } catch (e) {
-                    // If not valid JSON, treat as plain text
-                    all.push(`⏰ ${hour}\n${saved}`);
-                    continue;
-                }
-
-                // Process each entry for this hour
-                for (const entry of entries) {
-                    if (entry.type === 'water') {
-                        // Water entries are handled separately
-                        continue;
-                    } else if (entry.analysis !== undefined) {
-                        // AI Analysis entry
-                        const ts = entry.timestamp ? new Date(entry.timestamp).toLocaleString() : '';
-                        all.push(`⏰ ${hour}\nSamopoczucie: ${entry.mood || '-'}\nPosiłki: ${entry.meals || '-'}\nDodatkowe: ${entry.extra || '-'}\nNawodnienie: ${entry.water || '-'}\nAnaliza AI:\n${entry.analysis}\n[Zapisano: ${ts}]`);
-                    } else if (entry.displayText) {
-                        // Generic entry with displayText
-                        all.push(`⏰ ${hour}\n${entry.displayText}`);
-                    }
+                const parsed = JSON.parse(saved);
+                if (parsed && parsed.analysis !== undefined) {
+                    // użyj timestamp z obiektu jeśli jest
+                    const ts = parsed.timestamp || '';
+                    entryText = `⏰ ${hour}\nSamopoczucie: ${parsed.mood}\nPosiłki: ${parsed.meals}\nDodatkowe: ${parsed.extra || '-'}\nNawodnienie: ${parsed.water || '-'}\nAnaliza AI:\n${parsed.analysis}\n[Zapisano: ${ts}]`;
+                } else {
+                    // jeżeli JSON, ale nie w oczekiwanym kształcie, pozostaw surowy tekst
+                    entryText = String(saved);
                 }
             } catch (e) {
-                console.error('Error processing entry:', e);
-                all.push(`⏰ ${hour}\n${saved}`);
+                // saved jest już tekstem — zostaw jak jest
+                entryText = String(saved);
             }
-        }
-        
-        // Add water summary at the top if there are water entries
-        if (waterEntries.length > 0) {
-            all.unshift(`🚰 NAWODNIENIE - łącznie: ${totalWaterForDay}ml\n${waterEntries.join('\n')}`);
+
+            all.push(entryText);
         }
 
         savedDataBox.textContent = all.length ? all.join("\n\n---\n\n") : "(brak danych)";
@@ -1931,21 +1786,19 @@ document.addEventListener("DOMContentLoaded", () => {
         const timeExact = now.toTimeString().slice(0, 5);
         const timestamp = now.toLocaleString();
 
-        // Dodajemy też informację o nawodnieniu do zapisu
-        const currentWater = parseInt(localStorage.getItem('waterAmount')) || waterAmount || 0;
-        const currentGoal = parseInt(localStorage.getItem('dailyGoal')) || dailyGoal || 2000;
-
-        const textEntry = `⏰ ${timeExact}
-Samopoczucie: ${mood}
-Posiłki: ${meals}
-Notatki: ${extra || '-'}
-Nawodnienie: ${currentWater} ml (cel: ${currentGoal} ml)
-Analiza AI:
-${analysis}
-[Zapisano: ${timestamp}]`;
-
-        // Zapisz jako czysty tekst (nie JSON)
-        localStorage.setItem(fullKey, textEntry);
+        // Zapis tylko wartości z elementu o id 'waterAmount' — bez sumowania z historią.
+        const waterEl = document.getElementById('waterAmount');
+        let waterValue = 0;
+        if (waterEl) {
+            // obsłuż zarówno input.value jak i wewnętrzny tekst jeśli to div/span
+            const v = waterEl.value !== undefined ? waterEl.value : (waterEl.innerText || waterEl.textContent || '0');
+            waterValue = Number(v) || 0;
+        } else {
+            // fallback: spróbuj pobrać z localStorage lub zmiennej waterAmount
+            waterValue = Number(localStorage.getItem('waterAmount')) || (typeof waterAmount === 'number' ? waterAmount : 0) || 0;
+        }
+        // Zapisujemy tylko obiekt z polem water (i znacznikiem czasu)
+        localStorage.setItem(fullKey, JSON.stringify({ water: waterValue, timestamp: now.toISOString() }));
 
         // Jeśli w widoku jest właśnie wybrany ten dzień, odśwież listę
         const selected = selectedDateTitle.textContent;
