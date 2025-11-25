@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MindEats AI 🍎</title>
+    <link rel="stylesheet" href="style.css" />
+    <script>
+        // Immediate function to check first visit
+        (function () {
+            try {
+                // Check if this is the first visit
+                if (!sessionStorage.getItem('hasSeenIntro')) {
+                    // Set a flag to prevent multiple redirects
+                    sessionStorage.setItem('hasSeenIntro', 'true');
+
+                    // Store the original URL in case we need it
+                    if (!sessionStorage.getItem('originalUrl')) {
+                        sessionStorage.setItem('originalUrl', window.location.href);
+                    }
+
+                    // Redirect to intro page
+                    window.location.replace('intro.html');
+                    return; // Stop further execution
+                }
+            } catch (e) {
+                console.error('Error in redirect script:', e);
+                // If there's an error, just continue loading the page
+            }
+        })();
+    </script>
+</head>
+
+<body>
+    <!-- MUZYKA TŁA -->
+    <audio id="bgMusic" loop style="display: none;">
+        <source src="audio/music.mp3" type="audio/mpeg">
+        Twoja przeglądarka nie obsługuje elementu audio.
+    </audio>
+    <script>
+        // Play music when page loads
+        document.addEventListener('DOMContentLoaded', function () {
+            const bgMusic = document.getElementById('bgMusic');
+            const musicToggleBtn = document.getElementById('musicToggleBtn');
+
+            // Initialize music state
+            let isMusicPlaying = true;
+
+            // Function to update button state
+            function updateMusicButton() {
+                if (bgMusic.paused) {
+                    musicToggleBtn.textContent = '🔇 Muzyka';
+                    musicToggleBtn.setAttribute('aria-pressed', 'false');
+                } else {
+                    musicToggleBtn.textContent = '🔊 Muzyka';
+                    musicToggleBtn.setAttribute('aria-pressed', 'true');
+                }
+            }
+
+            // Function to start playback
+            function startPlayback() {
+                bgMusic.volume = 0.5;
+                const playPromise = bgMusic.play();
+
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        console.log('Autoplay prevented, waiting for user interaction');
+                        // Show a message to the user that they need to interact to play music
+                        const playMessage = document.createElement('div');
+                        playMessage.textContent = 'Kliknij w dowolne miejsce, aby odtworzyć muzykę';
+                        playMessage.style.position = 'fixed';
+                        playMessage.style.bottom = '20px';
+                        playMessage.style.left = '50%';
+                        playMessage.style.transform = 'translateX(-50%)';
+                        playMessage.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                        playMessage.style.color = 'white';
+                        playMessage.style.padding = '10px 20px';
+                        playMessage.style.borderRadius = '20px';
+                        playMessage.style.zIndex = '1000';
+                        playMessage.style.fontSize = '14px';
+                        document.body.appendChild(playMessage);
+
+                        // Remove the message after 3 seconds
+                        setTimeout(() => {
+                            playMessage.style.transition = 'opacity 1s';
+                            playMessage.style.opacity = '0';
+                            setTimeout(() => playMessage.remove(), 1000);
+                        }, 3000);
+
+                        // Set up interaction to start playback
+                        const startOnInteraction = function () {
+                            bgMusic.play().then(() => {
+                                document.removeEventListener('click', startOnInteraction);
+                                document.removeEventListener('keydown', startOnInteraction);
+                                updateMusicButton();
+                            }).catch(e => console.log('Playback failed:', e));
+                        };
+
+                        document.addEventListener('click', startOnInteraction, { once: true });
+                        document.addEventListener('keydown', startOnInteraction, { once: true });
+                    });
+                }
+            }
+
+            // Toggle music play/pause
+            function toggleMusic() {
+                if (bgMusic.paused) {
+                    bgMusic.play().then(() => {
+                        isMusicPlaying = true;
+                        updateMusicButton();
+                    }).catch(e => {
+                        console.log('Playback failed:', e);
+                        isMusicPlaying = false;
+                        updateMusicButton();
+                    });
+                } else {
+                    bgMusic.pause();
+                    isMusicPlaying = false;
+                    updateMusicButton();
+                }
+            }
+
+            // Add click event to music toggle button
+            if (musicToggleBtn) {
+                musicToggleBtn.addEventListener('click', toggleMusic);
+            }
+
+            // Initialize the audio
+            bgMusic.volume = 0.5;
+            bgMusic.muted = false;
+
+            // Try to start playback immediately
+            startPlayback();
+
+            // Also try to start when the page is fully loaded
+            window.addEventListener('load', startPlayback);
+        });
+    </script>
+
+    <!-- SIDEBAR (PASEK BOCZNY) -->
+    <aside id="sidebar" class="sidebar" aria-hidden="true" aria-label="Menu boczne">
+        <button class="close-btn" id="closeSidebarBtn" aria-label="Zamknij menu">
+            <span aria-hidden="true">&times;</span>
+        </button>
+        <h2>MindEats AI 🍎</h2>
+        <nav>
+            <ul>
+                <li><button class="nav-btn" data-target="home">Strona główna</button></li>
+                <li><button class="nav-btn" data-target="profile">Profil</button></li>
+                <li><button class="nav-btn" data-target="hydration">Nawodnienie</button></li>
+                <li><button class="nav-btn" data-target="recipes">Pomysł na posiłek</button></li>
+                <li><button class="nav-btn" data-target="calendar">Kalendarz</button></li>
+                <li><button class="nav-btn" data-target="customize">Personalizacja kolorów</button></li>
+                <li><button class="nav-btn" id="logoutBtn" onclick="clearAllData()">Wyloguj</button></li>
+            </ul>
+        </nav>
+    </aside>
+
+    <!-- PRZYCISK MENU -->
+    <button class="menu-btn" id="openSidebarBtn" aria-label="Otwórz menu">
+        <span class="sr-only">Menu</span>
+    </button>
+
+    <!-- PRZEŁĄCZNIK TRYBU I MUZYKI -->
+    <div class="theme-switch" id="themeSwitch">
+        <button id="toggleThemeBtn" aria-pressed="false">🌙 Tryb ciemny</button>
+        <button id="musicToggleBtn" aria-pressed="true">🔊 Muzyka</button>
+    </div>
+
+    <!-- OVERLAY -->
+    <div id="overlay" class="overlay" tabindex="-1"></div>
+
+    <!-- GŁÓWNA ZAWARTOŚĆ STRONY -->
+    <main class="main-content" id="mainContent">
+
+        <!-- STRONA GŁÓWNA -->
+        <section id="home" class="page" aria-labelledby="home-title">
+            <h1 id="home-title" style="text-align: center;">Witaj w MindEats AI 🍎</h1>
+            <p>Wprowadź dane o posiłkach i samopoczuciu:</p>
+
+            <label for="mood">Jak się czujesz (1-10)?</label>
+            <input id="mood" type="number" min="1" max="10" inputmode="numeric" required />
+
+            <label for="meals">Co dziś zjadłeś?</label>
+            <textarea id="meals" rows="4" placeholder="Np. owsianka, kurczak z ryżem..." style="resize:none;"
+                required></textarea>
+
+            <label for="extra">Dodatkowe informacje (opcjonalne)</label>
+            <textarea id="extra" rows="2" placeholder="Np. uczucia, sen, notatki..." style="resize:none;"></textarea>
+
+            <button class="primary" id="analyzeBtn" type="button">Analizuj z AI 🤖</button>
+            <div id="result" aria-live="polite"></div>
+        </section>
+
+        <!-- PROFIL UŻYTKOWNIKA -->
+        <section id="profile" class="page" aria-labelledby="profile-title">
+
+            <!-- PODGLĄD PROFILU -->
+            <div id="profileView" class="profile-card" style="display:none;">
+                <div class="profile-avatar" aria-hidden="true"></div>
+                <h2 id="profileName"></h2>
+                <div class="profile-info" id="profileInfo">
+                    <p><strong>Płeć:</strong> <span id="profileGender"></span></p>
+                    <p><strong>Wiek:</strong> <span id="profileAge"></span></p>
+                    <p><strong>Wzrost:</strong> <span id="profileHeight"></span> cm</p>
+                    <p><strong>Waga:</strong> <span id="profileWeight"></span> kg</p>
+                    <p><strong>BMI:</strong> <span id="profileBMI"></span></p>
+                    <p><strong>BMR:</strong> <span id="profileBMR"></span> kcal</p>
+                    <p><strong>Aktywność:</strong> <span id="profileActivity"></span></p>
+                    <p><strong>CPM(Dzienne zapotrzebowanie kaloryczne):</strong> <span id="profileCPM"></span> kcal</p>
+                    <p><strong>Alergie / choroby:</strong> <span id="profileAllergies"></span></p>
+                </div>
+                <button class="primary" id="editProfileBtn" type="button">Edytuj profil</button>
+            </div>
+
+            <!-- EDYCJA PROFILU -->
+            <div id="profileEdit" style="display:block;">
+                <h2 id="profile-title" style="text-align: center;">Uzupełnij profil 👤</h2>
+
+                <label for="edit-name">Imię:</label>
+                <input id="edit-name" type="text" autocomplete="name" />
+
+                <label for="edit-gender">Płeć:</label>
+                <select id="edit-gender">
+                    <option value="">Wybierz płeć</option>
+                    <option value="Kobieta">Kobieta</option>
+                    <option value="Mężczyzna">Mężczyzna</option>
+                </select>
+
+                <label for="edit-age">Wiek:</label>
+                <input id="edit-age" type="number" min="1" max="150" />
+                <label for="edit-height">Wzrost (cm):</label>
+                <input id="edit-height" type="number" min="30" max="300" />
+                <label for="edit-weight">Waga (kg):</label>
+                <input id="edit-weight" type="number" min="1" max="600" />
+                <label for="edit-allergies">Alergie / Choroby:</label>
+                <input id="edit-allergies" type="text" />
+                <label for="edit-activity">Poziom aktywności (PAL):</label>
+                <select id="edit-activity">
+                    <option value="1.2">Siedzący tryb życia (1.2)</option>
+                    <option value="1.375">Niska aktywność (1.375)</option>
+                    <option value="1.55">Umiarkowana aktywność (1.55)</option>
+                    <option value="1.725">Wysoka aktywność (1.725)</option>
+                    <option value="1.9">Bardzo wysoka aktywność (1.9)</option>
+                </select>
+                <button class="primary" id="saveProfileBtn" type="button">Zapisz profil</button>
+            </div>
+        </section>
+
+        <!-- NAWODNIENIE -->
+        <section id="hydration" class="page" aria-labelledby="hydration-title">
+            <div class="page-content">
+                <h2 id="hydration-title" class="section-title">Śledzenie nawodnienia 💧</h2>
+
+                <div class="card hydration-card">
+                    <div class="hydration-container">
+                        <div class="water-counter">
+                            <span id="waterAmount">0</span> ml
+                        </div>
+
+                        <div class="water-buttons">
+                            <div class="btn-group">
+                                <button class="btn primary water-btn" data-amount="100">+100 ml</button>
+                                <button class="btn primary water-btn" data-amount="250">+250 ml</button>
+                                <button class="btn primary water-btn" data-amount="500">+500 ml</button>
+                            </div>
+                            <div class="btn-group">
+                                <button class="btn danger water-btn" data-amount="-100">-100 ml</button>
+                                <button class="btn danger water-btn" data-amount="-250">-250 ml</button>
+                                <button class="btn danger water-btn" data-amount="-500">-500 ml</button>
+                            </div>
+                        </div>
+
+                        <div class="water-goal">
+                            <label for="dailyGoal">Dzienne cele (ml):</label>
+                            <input type="number" id="dailyGoal" value="2000" min="500" step="100">
+                            <div class="progress-container">
+                                <div id="waterProgress">0%</div>
+                            </div>
+                        </div>
+
+                        <div class="water-actions">
+                            <button id="saveWater" class="btn primary">Zapisz dzienne spożycie</button>
+                            <button id="resetWater" class="btn btn-outline">Zresetuj licznik</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- STRONA Z PRZEPISAMI / POMYSŁAMI NA POSIŁEK -->
+        <section id="recipes" class="page" aria-labelledby="recipes-title">
+            <h2 id="recipes-title" style="text-align:center;">Pomysł na posiłek 🍽️</h2>
+
+            <p style="text-align:center;">Wybierz typ posiłku:</p>
+            <div style="display:flex;gap:8px;justify-content:center;margin-bottom:12px;">
+                <button class="btn" id="filterBreakfast" type="button"
+                    style="width:auto;padding:8px 12px;">Śniadanie</button>
+                <button class="btn" id="filterLunch" type="button" style="width:auto;padding:8px 12px;">Obiad</button>
+                <button class="btn" id="filterDinner" type="button"
+                    style="width:auto;padding:8px 12px;">Kolacja</button>
+                <button class="btn" id="filterAll" type="button" style="width:auto;padding:8px 12px;">Wszystkie</button>
+            </div>
+
+            <div class="recipes-container" id="recipesContainer" aria-live="polite">
+                <!-- karty posiłków będą renderowane przez JS -->
+            </div>
+        </section>
+
+
+        <!-- PERSONALIZACJA KOLORÓW -->
+        <section id="customize" class="page" aria-labelledby="customize-title">
+            <h2 id="customize-title" style="text-align: center;">Personalizacja kolorów 🎨</h2>
+            <p>Wybierz tło strony:</p>
+            <div class="color-palette">
+                <div class="color-option">
+                    <button class="color-btn" data-light="linear-gradient(135deg,#e9ecef,#dee2e6)"
+                        data-dark="linear-gradient(135deg,#2d2d2d,#1a1a1a)" onclick="selectColor(this)"
+                        data-tooltip="Szary"></button>
+                </div>
+                <div class="color-option">
+                    <button class="color-btn" data-light="linear-gradient(135deg,#e8f5e9,#f1f8e9)"
+                        data-dark="linear-gradient(135deg,#051c01,#0d3b10)" onclick="selectColor(this)"
+                        data-tooltip="Zielony"></button>
+                </div>
+                <div class="color-option">
+                    <button class="color-btn" data-light="linear-gradient(135deg,#e3f2fd,#e1f5fe)"
+                        data-dark="linear-gradient(135deg,#020e26,#09034d)" onclick="selectColor(this)"
+                        data-tooltip="Niebieski"></button>
+                </div>
+                <div class="color-option">
+                    <button class="color-btn" data-light="linear-gradient(135deg,#f3e5f5,#fce4ec)"
+                        data-dark="linear-gradient(135deg,#1c0126,#400769)" onclick="selectColor(this)"
+                        data-tooltip="Fioletowy"></button>
+                </div>
+                <div class="color-option">
+                    <button class="color-btn" data-light="linear-gradient(135deg,#fcd7de,#ffc2d5)"
+                        data-dark="linear-gradient(135deg,#3b010c,#700333)" onclick="selectColor(this)"
+                        data-tooltip="Bordowy"></button>
+                </div>
+            </div>
+        </section>
+
+        <section id="calendar" class="page" aria-labelledby="calendar-title">
+            <h2 id="calendar-title" style="text-align:center;">Kalendarz 📅</h2>
+
+            <div id="calendarHeader" class="calendar-header">
+                <button id="prevMonthBtn" class="cal-btn">←</button>
+                <h3 id="calendarTitle"></h3>
+                <button id="nextMonthBtn" class="cal-btn">→</button>
+            </div>
+
+            <div id="calendarContainer" class="calendar-container"></div>
+
+            <div id="calendarDayDetails" class="calendar-details" style="display:none;">
+                <h3 id="selectedDateTitle"></h3>
+
+                <h4>Dzienne podsumowanie:</h4>
+                <div id="waterHistory"></div>
+                <pre id="calendarSavedData">(brak danych)</pre>
+            </div>
+        </section>
+
+
+    </main>
+
+    <script src="script.js"></script>
+    <!-- PRZEPIS DNIA – WYSUWANY BOCZNY BLOK -->
+    <div id="recipeOfTheDay" class="recipe-day-box">
+        <div class="recipe-day-tab">🍽️ Przepis dnia</div>
+
+        <div class="recipe-day-content">
+            <h3 id="dayRecipeTitle"></h3>
+            <p id="dayRecipeDesc"></p>
+
+            <button id="openDayRecipe" class="primary" style="margin-top:10px;">
+                Zobacz przepis →
+            </button>
+        </div>
+    </div>
+
+</body>
+
+</html>
