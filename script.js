@@ -1786,21 +1786,27 @@ document.addEventListener("DOMContentLoaded", () => {
         const timeExact = now.toTimeString().slice(0, 5);
         const timestamp = now.toLocaleString();
 
-        // Dodajemy też informację o nawodnieniu do zapisu
-        const currentWater = parseInt(localStorage.getItem('waterAmount')) || waterAmount || 0;
-        const currentGoal = parseInt(localStorage.getItem('dailyGoal')) || dailyGoal || 2000;
+        // ==== Poprawione: oblicz prawdziwe dzienne nawodnienie (z waterHistory + bieżący licznik) ====
+        const storedHistory = JSON.parse(localStorage.getItem('waterHistory') || '{}');
+        const todayKey = new Date().toISOString().split('T')[0];
+        const savedTotal = (storedHistory[todayKey] && Number(storedHistory[todayKey].total)) ? Number(storedHistory[todayKey].total) : 0;
+        const unsaved = Number(localStorage.getItem('waterAmount')) || waterAmount || 0;
+        const currentWaterTotal = savedTotal + unsaved;
 
-        const textEntry = `⏰ ${timeExact}
-Samopoczucie: ${mood}
-Posiłki: ${meals}
-Notatki: ${extra || '-'}
-Nawodnienie: ${currentWater} ml (cel: ${currentGoal} ml)
-Analiza AI:
-${analysis}
-[Zapisano: ${timestamp}]`;
+        const currentGoal = Number(localStorage.getItem('dailyGoal')) || dailyGoal || 2000;
 
-        // Zapisz jako czysty tekst (nie JSON)
-        localStorage.setItem(fullKey, textEntry);
+        // Zapisujemy jako JSON — loadDayEntries już potrafi parsować i wyświetli pole `water`.
+        const payload = {
+            mood: mood,
+            meals: meals,
+            extra: extra || '',
+            analysis: analysis,
+            water: currentWaterTotal,
+            goal: currentGoal,
+            timestamp: now.toISOString()
+        };
+
+        localStorage.setItem(fullKey, JSON.stringify(payload));
 
         // Jeśli w widoku jest właśnie wybrany ten dzień, odśwież listę
         const selected = selectedDateTitle.textContent;
@@ -1857,4 +1863,3 @@ function clearAllData() {
     alert('Wylogowano i wyczyszczono wszystkie dane.');
     location.reload();
 }
-
