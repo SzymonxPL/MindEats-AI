@@ -264,7 +264,8 @@ function palLabel(pal) {
 function setProfileAvatar(gender) {
     const avatar = document.querySelector('.profile-avatar');
     if (!avatar) return;
-    const maleImg = 'img/male.png', femaleImg = 'img/female.png';
+    const maleImg = 'img/male.png', femaleImg = 'img/female.png', neutralImg = 'neutral.png';
+    let img = neutralImg;
     if (gender) {
         const g = String(gender).toLowerCase();
         if (g.includes('m')) img = maleImg;
@@ -1854,4 +1855,5 @@ function clearAllData() {
     alert('Wylogowano i wyczyszczono wszystkie dane.');
     location.reload();
 }
+
 
