@@ -79,7 +79,6 @@ MindEats AI to lekka, nowoczesna aplikacja webowa, która wspiera zdrowe nawyki:
 
 - Autoodtwarzanie muzyki może być blokowane (wymaga kliknięcia).  
 - Animacje canvas mogą być cięższe dla słabszych telefonów.  
-- Endpoint AI wymaga własnego backendu proxy.  
 - Brak synchronizacji między urządzeniami (tylko localStorage).
 - Czasami trzeba trochę poczekać na wygenerowanie analizy.
 
